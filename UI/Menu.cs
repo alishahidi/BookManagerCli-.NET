@@ -7,32 +7,31 @@ namespace BookManagerCLI.UI;
 
 public class Menu
 {
-        private readonly BookService _bookService = new();
+    private readonly BookService _bookService = new();
 
-        public void ShowMainMenu()
+    public void ShowMainMenu()
+    {
+        while (true)
         {
-            while (true)
-            {
-                Console.Clear();
-                var choice = AnsiConsole.Prompt(
-                    new SelectionPrompt<string>()
-                        .Title("[bold yellow]📚 Book Manager CLI[/]")
-                        .PageSize(10)
-                        .AddChoices("➕ Add Book", "📜 View Books", "✏️ Update Book", "🔍 Search Books", "❌ Remove Book", "🚪 Exit")
-                );
+            Console.Clear();
+            var choice = AnsiConsole.Prompt(
+                new SelectionPrompt<string>()
+                    .Title("[bold yellow]📚 Book Manager CLI[/]")
+                    .PageSize(10)
+                    .AddChoices("➕ Add Book", "📜 View Books", "✏️ Update Book", "🔍 Search Books", "❌ Remove Book", "🚪 Exit")
+            );
 
-                switch (choice)
-                {
-                    case "➕ Add Book": AddBook(); break;
-                    case "📜 View Books": ViewBooks(); break;
-                    case "✏️ Update Book": UpdateBook(); break;  // New option
-                    case "🔍 Search Books": SearchBooks(); break;  // New option
-                    case "❌ Remove Book": RemoveBook(); break;
-                    case "🚪 Exit": return;
-                }
+            switch (choice)
+            {
+                case "➕ Add Book": AddBook(); break;
+                case "📜 View Books": ViewBooks(); break;
+                case "✏️ Update Book": UpdateBook(); break;
+                case "🔍 Search Books": SearchBooks(); break;
+                case "❌ Remove Book": RemoveBook(); break;
+                case "🚪 Exit": return;
             }
         }
-
+    }
 
     private void AddBook()
     {
@@ -46,7 +45,7 @@ public class Menu
 
         _bookService.AddBook(book);
         AnsiConsole.MarkupLine("[green]✅ Book added successfully![/]");
-        AnsiConsole.Prompt(new TextPrompt<string>("Press Enter to continue..."));
+        AnsiConsole.Prompt(new TextPrompt<string>("Press Enter to continue...").AllowEmpty());
     }
 
     private void ViewBooks()
@@ -74,7 +73,7 @@ public class Menu
             AnsiConsole.Write(table);
         }
 
-        AnsiConsole.Prompt(new TextPrompt<string>("Press Enter to continue..."));
+        AnsiConsole.Prompt(new TextPrompt<string>("Press Enter to continue...").AllowEmpty());
     }
 
     private void RemoveBook()
@@ -86,10 +85,9 @@ public class Menu
         else
             AnsiConsole.MarkupLine("[red]❌ Book not found.[/]");
 
-        AnsiConsole.Prompt(new TextPrompt<string>("Press Enter to continue..."));
+        AnsiConsole.Prompt(new TextPrompt<string>("Press Enter to continue...").AllowEmpty());
     }
-    
-    
+
     private void SearchBooks()
     {
         string searchTitle = AnsiConsole.Ask<string>("[bold]Enter book title to search:[/]");
@@ -114,7 +112,7 @@ public class Menu
             AnsiConsole.Write(table);
         }
 
-        AnsiConsole.Prompt(new TextPrompt<string>("Press Enter to continue..."));
+        AnsiConsole.Prompt(new TextPrompt<string>("Press Enter to continue...").AllowEmpty());
     }
 
     private void UpdateBook()
@@ -128,23 +126,38 @@ public class Menu
             return;
         }
 
-        string? newTitle = AnsiConsole.Ask<string>("[bold]Enter new title (leave empty to keep unchanged):[/]");
-        string? newAuthor = AnsiConsole.Ask<string>("[bold]Enter new author (leave empty to keep unchanged):[/]");
-        int? newYear = AnsiConsole.Ask<int?>("[bold]Enter new published year (leave empty to keep unchanged):[/]");
-        string? newDescription = AnsiConsole.Ask<string>("[bold]Enter new description (leave empty to keep unchanged):[/]");
+        // Use optional inputs with default values
+        string newTitle = AnsiConsole.Prompt(
+            new TextPrompt<string>("[bold]Enter new title (leave empty to keep unchanged):[/]")
+                .DefaultValue(book.Title)
+                .AllowEmpty());
+
+        string newAuthor = AnsiConsole.Prompt(
+            new TextPrompt<string>("[bold]Enter new author (leave empty to keep unchanged):[/]")
+                .DefaultValue(book.Author)
+                .AllowEmpty());
+
+        int newYear = AnsiConsole.Prompt(
+            new TextPrompt<int>("[bold]Enter new published year (leave empty to keep unchanged):[/]")
+                .DefaultValue(book.PublishedYear)
+                .AllowEmpty());
+
+        string newDescription = AnsiConsole.Prompt(
+            new TextPrompt<string>("[bold]Enter new description (leave empty to keep unchanged):[/]")
+                .DefaultValue(book.Description)
+                .AllowEmpty());
 
         if (_bookService.UpdateBook(id, new BookDto()
-            {
-                Title = newTitle,
-                Author = newAuthor,
-                Description = newDescription,
-                PublishedYear = newYear
-            }))
+        {
+            Title = string.IsNullOrWhiteSpace(newTitle) ? book.Title : newTitle,
+            Author = string.IsNullOrWhiteSpace(newAuthor) ? book.Author : newAuthor,
+            Description = string.IsNullOrWhiteSpace(newDescription) ? book.Description : newDescription,
+            PublishedYear = newYear == 0 ? book.PublishedYear : newYear
+        }))
             AnsiConsole.MarkupLine("[green]✅ Book updated successfully![/]");
         else
             AnsiConsole.MarkupLine("[red]❌ Update failed.[/]");
 
-        AnsiConsole.Prompt(new TextPrompt<string>("Press Enter to continue..."));
+        AnsiConsole.Prompt(new TextPrompt<string>("Press Enter to continue...").AllowEmpty());
     }
-
 }

@@ -44,8 +44,8 @@ public class BookService
     public List<Book> SearchBooks(string search)
     {
         return (from book in _context.Books
-            where book.Title.Contains(search) &&
-                  book.Author.Contains(search)
+            where book.Title.ToLower().Contains(search) ||
+                  book.Author.ToLower().Contains(search)
             select book).ToList();
     }
 
